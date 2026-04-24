@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+
+<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bloczek</title>
+<style>
+body {
+    font-family: Arial;
+    margin: 10px;
+    font-size: 18px; /* większy tekst */
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    max-width: 100%;
+}
+
+.table {
+    border: 2px solid #333;
+    padding: 10px;
+}
+
+.seats {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.seat {
+    flex: 1;
+    border: 1px solid #666;
+    padding: 20px 10px; /* większy klik */
+    cursor: pointer;
+    background: #f5f5f5;
+    text-align: center;
+    font-size: 16px;
+}
+
+
+
+.seat:hover { background: #ddd; }
+
+.seat-id {
+    color: #07498f; /* niebieski */
+}
+
+    button {
+    font-size: 18px;
+    padding: 12px 16px;
+    margin-right: 10px;
+}
+
+    #modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    font-size: 18px;
+}
+
+select, textarea {
+    font-size: 18px;
+    padding: 8px;
+}
+
+textarea { width: 100%; }
+
+.topbar { margin-bottom: 20px; }
+
+    #summary {
+        margin-top: 30px;
+        padding: 15px;
+        border: 2px dashed #333;
+    }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    
+    <button onclick="editMenu()">Edytuj menu</button>
+</div>
+
+<div id="room" class="grid"></div>
+
+<div id="summary"></div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h3>Zamówienie</h3>
+
+        <label>Przystawka:</label><br>
+        <select id="starter"></select><br><br>
+
+        <label>Danie główne:</label><br>
+        <select id="main"></select><br><br>
+
+<label>Wake up 2nd service?</label><br>
+
+<label>
+    <input type="radio" name="abc" value="TAK"> TAK
+</label>
+
+<label style="margin-left:10px;">
+    <input type="radio" name="abc" value="NIE" checked> NIE
+</label>
+
+<br><br>
+
+        <label>Uwagi:</label><br>
+        <textarea id="notes"></textarea><br><br>
+
+        <button onclick="saveOrder()">Zapisz</button>
+        <button onclick="closeModal()">Anuluj</button>
+    </div>
+</div>
+
+<script>
+
+let selectedSeat = null;
+
+let menu = {
+    starters: [
+        { name: "Zupa pomidorowa", stock: 10 },
+        { name: "Sałatka", stock: 10 }
+    ],
+    mains: [
+        { name: "Kurczak", stock: 10 },
+        { name: "Makaron", stock: 10 }
+    ]
+};
+
+let orders = {};
+
+function renderRoom() {
+
+
+let seatsConfig = [
+    // RZĄD 1
+    "1A", "1B", "1C", "1D","1E", "1F",
+    // RZĄD 2
+    "2A", "2B", "2C", "2D","2E", "2F",
+    // RZĄD 3
+    "3A", "3B", "3C", "3D","3E", "3F",
+    // RZĄD 4 (NOWY)
+    "4A", "4B", "4C", "4D","4E", "4F"
+];
+
+function renderRoom() {
+    const room = document.getElementById("room");
+    room.innerHTML = "";
+
+    seatsConfig.forEach(seatId => {
+        const seat = document.createElement("div");
+        seat.className = "seat";
+
+        let text = `<b class="seat-id">${seatId}</b>`;
+
+        if (orders[seatId]) {
+            const o = orders[seatId];
+            text += `<br><small>${o.starter}</small><br><b>${o.main}</b><br><small>${o.abc}</small>`;
+            seat.classList.add("taken");
+        }
+
+        seat.innerHTML = text;
+
+        seat.onclick = () => openModal(seatId);
+
+        room.appendChild(seat);
+    });
+
+    renderSummary();
+}
+renderRoom()
+}
+
+function renderSummary() {
+        const summary = document.getElementById("summary");
+
+    let starterCount = {};
+    let mainCount = {};
+
+    Object.values(orders).forEach(o => {
+        starterCount[o.starter] = (starterCount[o.starter] || 0) + 1;
+        mainCount[o.main] = (mainCount[o.main] || 0) + 1;
+    });
+
+    //let html = "<h3>Podsumowanie dla kuchni</h3>";
+
+    //html += "<b>Łącznie zamówień: " + Object.keys(orders).length + "</b><br><br>";
+
+    let html = "<b>Przystawki:</b><br>";
+    for (let s in starterCount) {
+        html += s + ": " + starterCount[s] + "<br>";
+    }
+
+    html += "<br><b>Dania główne:</b><br>";
+    for (let m in mainCount) {
+        html += m + ": " + mainCount[m] + "<br>";
+    }
+
+    summary.innerHTML = html;
+}
+
+function openModal(seatId) {
+    selectedSeat = seatId;
+
+    const starterSelect = document.getElementById("starter");
+    const mainSelect = document.getElementById("main");
+
+    starterSelect.innerHTML = menu.starters.map(s =>
+        `<option ${s.stock <= 0 ? "disabled" : ""}>
+            ${s.name} (${s.stock})
+        </option>`
+    ).join("");
+
+    mainSelect.innerHTML = menu.mains.map(m =>
+        `<option ${m.stock <= 0 ? "disabled" : ""}>
+            ${m.name} (${m.stock})
+        </option>`
+    ).join("");
+
+    if (orders[seatId]) {
+        const o = orders[seatId];
+        starterSelect.value = o.starter;
+        mainSelect.value = o.main;
+        document.getElementById("payment").value = o.payment;
+        document.getElementById("notes").value = o.notes;
+    } else {
+        document.getElementById("notes").value = "";
+    }
+
+    document.getElementById("modal").style.display = "flex";
+
+    if (orders[seatId]) {
+    const o = orders[seatId];
+
+    document.querySelector(`input[name="abc"][value="${o.abc}"]`).checked = true;
+} else {
+    document.querySelector(`input[name="abc"][value="TAK"]`).checked = true;
+}
+}
+
+function changeStock(type, name, delta) {
+    const list = menu[type];
+    const item = list.find(i => i.name === name);
+    if (item) {
+        item.stock += delta;
+    }
+}
+
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
+}
+
+function saveOrder() {
+    const newStarter = document.getElementById("starter").value.split(" (")[0];
+    const newMain = document.getElementById("main").value.split(" (")[0];
+
+    const oldOrder = orders[selectedSeat];
+
+    // 🔄 oddaj stare do magazynu
+    if (oldOrder) {
+        changeStock("starters", oldOrder.starter, +1);
+        changeStock("mains", oldOrder.main, +1);
+    }
+
+    // 🔻 zabierz nowe
+    changeStock("starters", newStarter, -1);
+    changeStock("mains", newMain, -1);
+
+    orders[selectedSeat] = {
+        starter: newStarter,
+        main: newMain,
+        abc: document.querySelector('input[name="abc"]:checked').value,
+        notes: document.getElementById("notes").value
+    };
+
+    closeModal();
+    renderRoom();
+}
+
+function deleteOrder() {
+    const oldOrder = orders[selectedSeat];
+
+    if (oldOrder) {
+        changeStock("starters", oldOrder.starter, +1);
+        changeStock("mains", oldOrder.main, +1);
+    }
+
+    delete orders[selectedSeat];
+
+    closeModal();
+    renderRoom();
+}
+
+
+function editMenu() {
+    const starters = prompt("Podaj przystawki z ilością np. Zupa:10,Sałatka:5");
+    const mains = prompt("Podaj dania główne z ilością np. Kurczak:10,Makaron:5");
+
+    if (starters) {
+        menu.starters = starters.split(",").map(s => {
+            const [name, stock] = s.split(":");
+            return { name: name.trim(), stock: parseInt(stock) || 0 };
+        });
+    }
+
+    if (mains) {
+        menu.mains = mains.split(",").map(m => {
+            const [name, stock] = m.split(":");
+            return { name: name.trim(), stock: parseInt(stock) || 0 };
+        });
+    }
+
+    renderRoom();
+}
+
+renderRoom();
+</script>
+
+</body>
+</html>
