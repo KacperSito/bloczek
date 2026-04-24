@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pl">
-<head>
+<!-- saved from url=(0014)about:internet -->
+<html lang="pl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
 <title>Bloczek</title>
 <style>
 body {
@@ -37,6 +37,7 @@ body {
     background: #f5f5f5;
     text-align: center;
     font-size: 16px;
+    min-height: 90px;
 }
 
 
@@ -94,9 +95,9 @@ textarea { width: 100%; }
     <button onclick="editMenu()">Edytuj menu</button>
 </div>
 
-<div id="room" class="grid"></div>
+<div id="room" class="grid"><div class="seat"><b class="seat-id">1A</b></div><div class="seat"><b class="seat-id">1B</b></div><div class="seat"><b class="seat-id">1C</b></div><div class="seat"><b class="seat-id">1D</b></div><div class="seat"><b class="seat-id">1E</b></div><div class="seat"><b class="seat-id">1F</b></div><div class="seat"><b class="seat-id">2A</b></div><div class="seat"><b class="seat-id">2B</b></div><div class="seat"><b class="seat-id">2C</b></div><div class="seat"><b class="seat-id">2D</b></div><div class="seat"><b class="seat-id">2E</b></div><div class="seat"><b class="seat-id">2F</b></div><div class="seat"><b class="seat-id">3A</b></div><div class="seat"><b class="seat-id">3B</b></div><div class="seat"><b class="seat-id">3C</b></div><div class="seat"><b class="seat-id">3D</b></div><div class="seat"><b class="seat-id">3E</b></div><div class="seat"><b class="seat-id">3F</b></div><div class="seat"><b class="seat-id">4A</b></div><div class="seat"><b class="seat-id">4B</b></div><div class="seat"><b class="seat-id">4C</b></div><div class="seat"><b class="seat-id">4D</b></div><div class="seat"><b class="seat-id">4E</b></div><div class="seat"><b class="seat-id">4F</b></div></div>
 
-<div id="summary"></div>
+<div id="summary"><b>Przystawki:</b><br><br><b>Dania główne:</b><br></div>
 
 <div id="modal">
     <div class="modal-content">
@@ -115,7 +116,7 @@ textarea { width: 100%; }
 </label>
 
 <label style="margin-left:10px;">
-    <input type="radio" name="abc" value="NIE" checked> NIE
+    <input type="radio" name="abc" value="NIE" checked=""> NIE
 </label>
 
 <br><br>
@@ -332,5 +333,5 @@ function editMenu() {
 renderRoom();
 </script>
 
-</body>
-</html>
+
+</body></html>
