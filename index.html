@@ -93,6 +93,7 @@ textarea { width: 100%; }
 <div class="topbar">
     
     <button onclick="editMenu()">Edytuj menu</button>
+    <button onclick="toggleView()">Odwróć widok</button>
 </div>
 
 <div id="room" class="grid"><div class="seat"><b class="seat-id">1A</b></div><div class="seat"><b class="seat-id">1B</b></div><div class="seat"><b class="seat-id">1C</b></div><div class="seat"><b class="seat-id">1D</b></div><div class="seat"><b class="seat-id">1E</b></div><div class="seat"><b class="seat-id">1F</b></div><div class="seat"><b class="seat-id">2A</b></div><div class="seat"><b class="seat-id">2B</b></div><div class="seat"><b class="seat-id">2C</b></div><div class="seat"><b class="seat-id">2D</b></div><div class="seat"><b class="seat-id">2E</b></div><div class="seat"><b class="seat-id">2F</b></div><div class="seat"><b class="seat-id">3A</b></div><div class="seat"><b class="seat-id">3B</b></div><div class="seat"><b class="seat-id">3C</b></div><div class="seat"><b class="seat-id">3D</b></div><div class="seat"><b class="seat-id">3E</b></div><div class="seat"><b class="seat-id">3F</b></div><div class="seat"><b class="seat-id">4A</b></div><div class="seat"><b class="seat-id">4B</b></div><div class="seat"><b class="seat-id">4C</b></div><div class="seat"><b class="seat-id">4D</b></div><div class="seat"><b class="seat-id">4E</b></div><div class="seat"><b class="seat-id">4F</b></div></div>
@@ -109,7 +110,7 @@ textarea { width: 100%; }
         <label>Danie główne:</label><br>
         <select id="main"></select><br><br>
 
-<label>Wake up 2nd service?</label><br>
+<label>Budzenie do 2. serwisu?</label><br>
 
 <label>
     <input type="radio" name="abc" value="TAK"> TAK
@@ -132,15 +133,23 @@ textarea { width: 100%; }
 <script>
 
 let selectedSeat = null;
+let reversed = false;
+
+function toggleView() {
+    reversed = !reversed;
+    renderRoom();
+}
 
 let menu = {
     starters: [
-        { name: "Zupa pomidorowa", stock: 10 },
-        { name: "Sałatka", stock: 10 }
+        { name: "-", stock: Infinity },
+        { name: "Zupa pomidorowa", stock: 5 },
+        { name: "Sałatka", stock: 5 }
     ],
     mains: [
-        { name: "Kurczak", stock: 10 },
-        { name: "Makaron", stock: 10 }
+        { name: "-", stock: Infinity },
+        { name: "Kurczak", stock: 5 },
+        { name: "Makaron", stock: 5 }
     ]
 };
 
@@ -164,7 +173,9 @@ function renderRoom() {
     const room = document.getElementById("room");
     room.innerHTML = "";
 
-    seatsConfig.forEach(seatId => {
+const displaySeats = reversed ? [...seatsConfig].reverse() : seatsConfig;
+
+displaySeats.forEach(seatId => {
         const seat = document.createElement("div");
         seat.className = "seat";
 
@@ -224,13 +235,13 @@ function openModal(seatId) {
 
     starterSelect.innerHTML = menu.starters.map(s =>
         `<option ${s.stock <= 0 ? "disabled" : ""}>
-            ${s.name} (${s.stock})
+            ${s.name} ${s.stock === Infinity ? "" : `(${s.stock})`} 
         </option>`
     ).join("");
 
     mainSelect.innerHTML = menu.mains.map(m =>
         `<option ${m.stock <= 0 ? "disabled" : ""}>
-            ${m.name} (${m.stock})
+            ${m.name} ${m.stock === Infinity ? "" : `(${m.stock})`}
         </option>`
     ).join("");
 
@@ -258,7 +269,8 @@ function openModal(seatId) {
 function changeStock(type, name, delta) {
     const list = menu[type];
     const item = list.find(i => i.name === name);
-    if (item) {
+
+    if (item && item.stock !== Infinity) {
         item.stock += delta;
     }
 }
@@ -310,21 +322,39 @@ function deleteOrder() {
 
 
 function editMenu() {
-    const starters = prompt("Podaj przystawki z ilością np. Zupa:10,Sałatka:5");
-    const mains = prompt("Podaj dania główne z ilością np. Kurczak:10,Makaron:5");
+    const starters = prompt("Podaj przystawki np. zupa5,salatka10");
+    const mains = prompt("Podaj dania główne np. kurczak10,makaron5");
+
+    function parseInput(input) {
+        return input.split(",").map(item => {
+            item = item.trim();
+
+            // rozdziela nazwę i liczbę z końca (np. "zupa10")
+            const match = item.match(/^(.+?)(\d+)$/);
+
+            if (!match) return null;
+
+            return {
+                name: match[1].trim(),
+                stock: parseInt(match[2])
+            };
+        }).filter(Boolean);
+    }
 
     if (starters) {
-        menu.starters = starters.split(",").map(s => {
-            const [name, stock] = s.split(":");
-            return { name: name.trim(), stock: parseInt(stock) || 0 };
-        });
+        const parsed = parseInput(starters);
+        menu.starters = [
+            { name: "-", stock: Infinity },
+            ...parsed
+        ];
     }
 
     if (mains) {
-        menu.mains = mains.split(",").map(m => {
-            const [name, stock] = m.split(":");
-            return { name: name.trim(), stock: parseInt(stock) || 0 };
-        });
+        const parsed = parseInput(mains);
+        menu.mains = [
+            { name: "-", stock: Infinity },
+            ...parsed
+        ];
     }
 
     renderRoom();
